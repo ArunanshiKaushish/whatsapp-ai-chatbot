@@ -81,7 +81,7 @@ def health():
         "status": status,
         "service": "whatsapp-ai-chatbot",
         "missing_config": missing,
-    }, 200 if status == "ok" else 503
+    }, 200
 
 
 @app.route("/webhook/whatsapp", methods=["POST"])
