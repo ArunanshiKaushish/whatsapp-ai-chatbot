@@ -33,14 +33,24 @@ def get_system_prompt() -> str:
     return DEFAULT_SYSTEM_PROMPT
 
 
+def _env(name: str, default: str = "") -> str:
+    """Read env var and strip invisible whitespace (common Railway paste issue)."""
+    return os.getenv(name, default).strip().strip('"').strip("'")
+
+
 class Config:
     """Central configuration object."""
 
-    ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
-    TWILIO_ACCOUNT_SID: str = os.getenv("TWILIO_ACCOUNT_SID", "")
-    TWILIO_AUTH_TOKEN: str = os.getenv("TWILIO_AUTH_TOKEN", "")
-    TWILIO_WHATSAPP_NUMBER: str = os.getenv("TWILIO_WHATSAPP_NUMBER", "")
-    CLAUDE_MODEL: str = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-20250514")
+    # LLM provider: "gemini" (free, no card) or "anthropic"
+    LLM_PROVIDER: str = _env("LLM_PROVIDER", "anthropic").lower()
+
+    ANTHROPIC_API_KEY: str = _env("ANTHROPIC_API_KEY")
+    GEMINI_API_KEY: str = _env("GEMINI_API_KEY")
+    TWILIO_ACCOUNT_SID: str = _env("TWILIO_ACCOUNT_SID")
+    TWILIO_AUTH_TOKEN: str = _env("TWILIO_AUTH_TOKEN")
+    TWILIO_WHATSAPP_NUMBER: str = _env("TWILIO_WHATSAPP_NUMBER")
+    CLAUDE_MODEL: str = _env("CLAUDE_MODEL", "claude-sonnet-4-6")
+    GEMINI_MODEL: str = _env("GEMINI_MODEL", "gemini-2.0-flash")
     FLASK_ENV: str = os.getenv("FLASK_ENV", "production")
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL", f"sqlite:///{DATA_DIR / 'chatbot.db'}"
@@ -53,8 +63,14 @@ class Config:
     def validate(cls) -> list[str]:
         """Return list of missing required configuration keys."""
         missing = []
-        if not cls.ANTHROPIC_API_KEY:
-            missing.append("ANTHROPIC_API_KEY")
+        if cls.LLM_PROVIDER == "gemini":
+            if not cls.GEMINI_API_KEY:
+                missing.append("GEMINI_API_KEY")
+        elif cls.LLM_PROVIDER == "anthropic":
+            if not cls.ANTHROPIC_API_KEY:
+                missing.append("ANTHROPIC_API_KEY")
+        else:
+            missing.append("LLM_PROVIDER (must be 'gemini' or 'anthropic')")
         if not cls.TWILIO_ACCOUNT_SID:
             missing.append("TWILIO_ACCOUNT_SID")
         if not cls.TWILIO_AUTH_TOKEN:

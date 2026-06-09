@@ -8,7 +8,7 @@ from flask import Flask, request
 from twilio.request_validator import RequestValidator
 from twilio.twiml.messaging_response import MessagingResponse
 
-from claude_client import ClaudeClient
+from llm_client import get_llm_client
 from config import Config, LOGS_DIR
 from database import (
     SessionLocal,
@@ -46,14 +46,14 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 app = Flask(__name__)
-claude_client: ClaudeClient | None = None
+_llm_client = None
 
 
-def get_claude() -> ClaudeClient:
-    global claude_client
-    if claude_client is None:
-        claude_client = ClaudeClient()
-    return claude_client
+def get_llm():
+    global _llm_client
+    if _llm_client is None:
+        _llm_client = get_llm_client()
+    return _llm_client
 
 
 def validate_twilio_request() -> bool:
@@ -80,6 +80,7 @@ def health():
     return {
         "status": status,
         "service": "whatsapp-ai-chatbot",
+        "llm_provider": Config.LLM_PROVIDER,
         "missing_config": missing,
     }, 200
 
@@ -144,7 +145,7 @@ def whatsapp_webhook():
             save_message(session, user.id, "user", message_body)
 
             # Generate Claude reply
-            reply = get_claude().generate_reply(
+            reply = get_llm().generate_reply(
                 history=history,
                 current_message=message_body,
                 memories=memory_texts,
@@ -162,7 +163,7 @@ def whatsapp_webhook():
                 user.id,
                 message_body,
                 reply,
-                claude_extract_fn=get_claude().extract_memories,
+                claude_extract_fn=get_llm().extract_memories,
             )
 
             session.commit()

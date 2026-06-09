@@ -7,7 +7,8 @@ from pathlib import Path
 
 # Use isolated temp DB for verification
 os.environ.setdefault("FLASK_ENV", "development")
-os.environ.setdefault("ANTHROPIC_API_KEY", "test-key")
+os.environ.setdefault("LLM_PROVIDER", "gemini")
+os.environ.setdefault("GEMINI_API_KEY", "test-key")
 os.environ.setdefault("TWILIO_ACCOUNT_SID", "test-sid")
 os.environ.setdefault("TWILIO_AUTH_TOKEN", "test-token")
 os.environ.setdefault("TWILIO_WHATSAPP_NUMBER", "whatsapp:+10000000000")
