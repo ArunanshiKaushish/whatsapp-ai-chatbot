@@ -85,6 +85,29 @@ def health():
     }, 200
 
 
+@app.route("/health/claude", methods=["GET"])
+def health_claude():
+    """Test if Claude API key on this server actually works."""
+    missing = Config.validate()
+    if missing:
+        return {"status": "error", "message": f"Missing config: {missing}"}, 503
+
+    try:
+        reply = get_llm().generate_reply(history=[], current_message="Reply with only OK", memories=[])
+        return {
+            "status": "ok",
+            "message": "Claude API key works on this server",
+            "test_reply": reply[:50],
+        }, 200
+    except Exception as exc:
+        return {
+            "status": "error",
+            "message": "Claude API key failed on this server",
+            "error": str(exc)[:200],
+            "fix": "Update ANTHROPIC_API_KEY in Railway Variables, then redeploy",
+        }, 503
+
+
 @app.route("/webhook/whatsapp", methods=["POST"])
 def whatsapp_webhook():
     """

@@ -44,6 +44,18 @@ if " " in key or "\n" in key or "\r" in key:
     print("    FIX:  Re-paste the key on one line with no spaces.")
     sys.exit(1)
 
+# Hidden / invalid characters
+bad_chars = [c for c in key if not c.isalnum() and c not in "-_"]
+if bad_chars:
+    print(f"    FAIL: Key contains invalid characters: {set(bad_chars)!r}")
+    print("    FIX:  Re-copy the key from Anthropic console. Do not type it manually.")
+    sys.exit(1)
+
+raw = os.getenv("ANTHROPIC_API_KEY", "")
+if raw != raw.strip() or raw.startswith('"') or raw.startswith("'"):
+    print("    WARN: .env had quotes or spaces around the key — using stripped version.")
+    print("    FIX:  Save .env without quotes: ANTHROPIC_API_KEY=sk-ant-...")
+
 if key.startswith("sk-ant-api03-") or key.startswith("sk-ant-"):
     print("    OK:   Key format looks valid.\n")
 else:
